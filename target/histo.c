@@ -55,13 +55,57 @@ void* compute_histogram_case1(void* input) {
     int* hist = (int*)(histArgs->hist);
     const int thread_id = histArgs->id;
 
-    if (thread_id == 0) {
-        for (int j = 0; j < T1N; j++) {
-            hist[data[j] % T1B]++;
-        }
+    const int STEP = T1N / NTHREADS;
+    const int start = thread_id * STEP;
+    const int end = start + STEP;
+	int * local_Hist = hist;
+    for (int i = start; i < end; i++) {
+        local_Hist[data[i] % T1B]++;
     }
-    return NULL;
+
+for (int i = 0; i < sizeof(hist); ++i) {
+	hist[i]+= local_Hist[i];
 }
+    return NULL;
+/*
+else if (thread_id == 1) {
+	for (int j = 12500000; j < 25000000; j++) {
+		local_Hist[data[j] % T1B]++;
+	}
+}
+else if (thread_id == 2) {
+                for (int j = 25000000; j < 37500000; j++) {
+                        local_Hist[data[j] % T1B]++;
+                }
+        }
+else if (thread_id == 3) {
+                for (int j = 37500000; j < 50000000; j++) {
+                        local_Hist[data[j] % T1B]++;
+                }
+        }
+else if (thread_id == 4) {
+                for (int j = 50000000; j < 62500000; j++) {
+                        local_Hist[data[j] % T1B]++;
+                }
+        }
+else if (thread_id == 5) {
+                for (int j = 62500000; j < 75000000; j++) {
+                        local_Hist[data[j] % T1B]++;
+                }
+        }
+else if (thread_id == 6) {
+                for (int j = 75000000; j < 87500000; j++) {
+                        local_Hist[data[j] % T1B]++;
+                }
+        }
+else if (thread_id == 7) {
+                for (int j = 87500000; j < 100000000; j++) {
+                        local_Hist[data[j] % T1B]++;
+                }
+        }
+*/
+
+
 
 /*  =============
 
@@ -69,24 +113,10 @@ This commented out function tries to divide up the data into
 blocks, one for each thread. However, there is a race! (where?)
 
 Try it out!
+*/
 
-void* compute_histogram_case1_RACE_CONDITION(void* input) {
-    HistogramArgs* histArgs = (HistogramArgs*)input;
-    int* data = (int*)(histArgs->data);
-    int* hist = (int*)(histArgs->hist);
-    const int thread_id = histArgs->id;
-
-    const int STEP = T1N / NTHREADS;
-    const int start = thread_id * STEP;
-    const int end = start + STEP;
-
-    for (int i = start; i < end; i++) {
-        hist[data[i] % T1B]++;
-    }
-
-    return NULL;
 }
-
+/*
 =============  */
 
 /************ Test Case 2 ************/
