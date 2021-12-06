@@ -60,7 +60,7 @@ void* compute_histogram_case1(void* input) {
     const int end = start + STEP;
 	int * local_Hist = hist;
     for (int i = start; i < end; i++) {
-        local_Hist[data[i] % T1B]++;
+        __sync_fetch_and_add(&hist[data[i] % T1B], 1);
     }
 
 for (int i = 0; i < sizeof(hist); ++i) {
