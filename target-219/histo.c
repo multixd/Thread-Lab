@@ -1,5 +1,8 @@
 #include "histo.h"
+#include "semaphore.h"
 
+sem_t mutex;
+int case2[8][T2B];
 /*  ============= 
 
 Add corresponding locks/semaphores and any other global variables here
@@ -13,6 +16,7 @@ sem_t mutex; //don't for get to initialize in main
 
 
 void init() {
+	sem_init(&mutex, 0, 1);
     /*  ============= 
     add initialization code for locks, or other global variables defined earlier
 
@@ -58,56 +62,46 @@ void* compute_histogram_case1(void* input) {
     const int STEP = T1N / NTHREADS;
     const int start = thread_id * STEP;
     const int end = start + STEP;
-	int * local_Hist = hist;
-	
-if (thread_id == 0 ) {
-    for (int i = 0; i < T1N; i++) {
-        hist[data[i] % T1B]++;
-    }
-}
-/*
-for (int i = 0; i < sizeof(hist); ++i) {
-	hist[i]+= local_Hist[i];
-}
-    return NULL;
+	int local_Hist[8] = {0,0,0,0,0,0,0,0};
 
-else if (thread_id == 1) {
-	for (int j = 12500000; j < 25000000; j++) {
-		local_Hist[data[j] % T1B]++;
+    for (int i = start; i < end; i++) {
+   	local_Hist[data[i] % T1B]++;
+    }
+for (int i = 0; i < 8; ++i) {
+	sem_wait(&mutex);
+	hist[i] += local_Hist[i];
+	sem_post(&mutex);
+}
+                                                      
+/*for(int i = 0; i < 8; i++) {
+ printf("%d ", i);
+        printf("%d ", local_Hist[i]);
+    printf("\n");
+}*/
+/*
+for(int i = 0; i < sizeof(local_Hist); i++) {
+ printf("%d ", i);
+        printf("%d ", local_Hist[i]);
+    printf("\n");
+}
+if(thread_id == 1){
+for(int i = 0; i < sizeof(local_Hist); i++) {
+ printf("%d ", i);
+        printf("%d ", hist[i]);
+    printf("\n");
+}
+}*/
+
+/*int static mutex = 1;
+for (int i = 0; i < 8; ++i) {
+	while(!__sync_bool_compare_and_swap(&mutex,1,0)) {
+//		__sync_fetch_and_add(&hist[i] ,local_Hist[i] );
+		hist[i] += local_Hist[i];
+		__sync_bool_compare_and_swap(&mutex,0,1);
 	}
 }
-else if (thread_id == 2) {
-                for (int j = 25000000; j < 37500000; j++) {
-                        local_Hist[data[j] % T1B]++;
-                }
-        }
-else if (thread_id == 3) {
-                for (int j = 37500000; j < 50000000; j++) {
-                        local_Hist[data[j] % T1B]++;
-                }
-        }
-else if (thread_id == 4) {
-                for (int j = 50000000; j < 62500000; j++) {
-                        local_Hist[data[j] % T1B]++;
-                }
-        }
-else if (thread_id == 5) {
-                for (int j = 62500000; j < 75000000; j++) {
-                        local_Hist[data[j] % T1B]++;
-                }
-        }
-else if (thread_id == 6) {
-                for (int j = 75000000; j < 87500000; j++) {
-                        local_Hist[data[j] % T1B]++;
-                }
-        }
-else if (thread_id == 7) {
-                for (int j = 87500000; j < 100000000; j++) {
-                        local_Hist[data[j] % T1B]++;
-                }
-        }
 */
-
+return NULL;
 
 
 /*  =============
@@ -148,11 +142,19 @@ void* compute_histogram_case2(void* input) {
     int* data = (int*)(histArgs->data);
     int* hist = (int*)(histArgs->hist);
     const int thread_id = histArgs->id;
+    const int STEP = T2N / NTHREADS;
+    const int start = thread_id * STEP;
+    const int end = start + STEP;
 
-    if (thread_id == 0) {
-        for (int j = 0; j < T2N; j++) {
-            hist[data[j] % T2B]++;
-        }
-    }
+ for (int i = start; i < end; i++) {
+        case2[thread_id][data[i] % T2B]++;
+ }
+
+ for (int i = 0; i < T2B; ++i) {
+               __sync_fetch_and_add(&hist[i] ,case2[thread_id][i] );
+ }
+
+
+
     return NULL;
 }
